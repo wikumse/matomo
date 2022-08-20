@@ -70,9 +70,7 @@ class GetCurrentTime extends Widget
      */
     public function render()
     {
-        // or: return $this->renderTemplate('myViewTemplate', array(...view variables...));
-
-        return '<div class="widgetBody">My Widget Text</div>';
+        return $this->renderTemplate('currentTime');
     }
 
 }

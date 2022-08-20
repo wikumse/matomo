@@ -13,8 +13,14 @@ class CurrentTime extends \Piwik\Plugin
     public function registerEvents()
     {
         return [
+            'AssetManager.getJavaScriptFiles' => 'getJavaScriptFiles',
             'CronArchive.getArchivingAPIMethodForPlugin' => 'getArchivingAPIMethodForPlugin',
         ];
+    }
+
+    public function getJavaScriptFiles(&$files)
+    {
+        $files[] = "plugins/CurrentTime/javascripts/currentTime.js";
     }
 
     // support archiving just this plugin via core:archive
