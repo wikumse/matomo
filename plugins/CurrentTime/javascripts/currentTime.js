@@ -39,25 +39,29 @@ $(function () {
             var siteTime = new Date(localTimeEpoch + (timeZoneInfo.siteOffset - timeZoneInfo.localOffset) * 1000);
             currentTimeHtml += '<p>' 
             + (showBoth ? '<span class="icon-tag-cloud"></span> ' : '') 
-            + siteTime.toLocaleString()
+            + dateToMinuteStr(siteTime)
             + ' (' + timeZoneInfo.siteTimezoneStr + ')</p>';
         }
 
         // show local time, but add the icon only when the both times are shown.
         currentTimeHtml += '<p>' 
             + (showBoth ? '<span class="icon-user"></span> ' : '') 
-            + localTime.toLocaleString()
+            + dateToMinuteStr(localTime)
             + ' (' + timeZoneInfo.localTimezoneStr + ')</p>';
 
         $('#currentTimeDisplay').html(currentTimeHtml);
         
-        setTimeout(updateTime, 1000, timeZoneInfo);
+        setTimeout(updateTime, (localTimeEpoch - Math.ceil(localTimeEpoch/60000)*60000), timeZoneInfo);
 
     }
 
     function getTimeZoneStr(offSetSeconds){
         var d = new Date(Math.abs(offSetSeconds*1000));
         return 'UTC' + (offSetSeconds < 0 ? '-' : '+') + ('0' + d.getUTCHours()).slice(-2) + ':' + ('0' + d.getUTCMinutes()).slice(-2);
+    }
+
+    function dateToMinuteStr(date){
+        return date.toLocaleDateString() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
     }
 
     initCurrentTimeWidget();
