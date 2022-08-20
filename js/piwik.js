@@ -2201,6 +2201,8 @@ if (typeof window.Matomo !== 'object') {
                 locationHrefAlias = safeDecodeWrapper(locationArray[1]),
                 configReferrerUrl = safeDecodeWrapper(locationArray[2]),
 
+                configIsFileUrl = windowAlias.location.protocol.slice(0,-1).toLowerCase() == 'file',
+
                 enableJSErrorTracking = false,
 
                 defaultRequestMethod = 'GET',
@@ -2342,6 +2344,9 @@ if (typeof window.Matomo !== 'object') {
 
                 // Is performance tracking enabled
                 configPerformanceTrackingEnabled = true,
+
+                // Is tracking on file:// urls enabled
+                configTrackingOnFileUrlsEnabled = false,
 
                 // will be set to true automatically once the onload event has finished
                 performanceAvailable = false,
@@ -3107,6 +3112,10 @@ if (typeof window.Matomo !== 'object') {
                     return;
                 }
 
+                if(configIsFileUrl && !configTrackingOnFileUrlsEnabled){
+                    return;
+                }
+
                 hasSentTrackingRequestYet = true;
 
                 if (!configDoNotTrack && request) {
@@ -3139,6 +3148,10 @@ if (typeof window.Matomo !== 'object') {
             function canSendBulkRequest(requests)
             {
                 if (configDoNotTrack) {
+                    return false;
+                }
+
+                if(configIsFileUrl && !configTrackingOnFileUrlsEnabled){
                     return false;
                 }
 
@@ -3893,6 +3906,10 @@ if (typeof window.Matomo !== 'object') {
                 }
 
                 if (configDoNotTrack) {
+                    return '';
+                }
+
+                if(configIsFileUrl && !configTrackingOnFileUrlsEnabled){
                     return '';
                 }
 
@@ -6330,6 +6347,7 @@ if (typeof window.Matomo !== 'object') {
              * @param bool enable If true, don't track if user agent sends 'do-not-track' header
              */
             this.setDoNotTrack = function (enable) {
+
                 var dnt = navigatorAlias.doNotTrack || navigatorAlias.msDoNotTrack;
                 configDoNotTrack = enable && (dnt === 'yes' || dnt === '1');
 
@@ -6506,6 +6524,14 @@ if (typeof window.Matomo !== 'object') {
                 configHeartBeatDelay = null;
                 heartBeatSetUp = false;
             };
+
+            /**
+             * Enable tracking on file urls
+             */
+            this.enableOnFileUrls = function () {
+                configTrackingOnFileUrlsEnabled = true;
+            };
+
 
             /**
              * Frame buster
