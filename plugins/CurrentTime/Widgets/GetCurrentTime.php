@@ -11,6 +11,10 @@ namespace Piwik\Plugins\CurrentTime\Widgets;
 use Piwik\Widget\Widget;
 use Piwik\Widget\WidgetConfig;
 
+use Piwik\Common;
+use Piwik\Date;
+use Piwik\Site;
+
 /**
  * This class allows you to add your own widget to the Piwik platform. In case you want to remove widgets from another
  * plugin please have a look at the "configureWidgetsList()" method.
@@ -70,7 +74,18 @@ class GetCurrentTime extends Widget
      */
     public function render()
     {
-        return $this->renderTemplate('currentTime');
+        
+        $idSite = Common::getRequestVar('idSite');
+
+        if (empty($idSite)) {
+            return;
+        }
+
+        $timeZone = Site::getTimezoneFor($idSite);
+        $utcOffset = Date::getUtcOffset($timeZone);
+
+        return $this->renderTemplate('currentTime', array("utcOffset" => $utcOffset));
+
     }
 
 }
