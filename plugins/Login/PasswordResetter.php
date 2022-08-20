@@ -250,14 +250,32 @@ class PasswordResetter
 
         // token valid for 24 hrs (give or take, due to the coarse granularity in our strftime format string)
         for ($i = 0; $i <= 24; $i++) {
-            $generatedToken = $this->generatePasswordResetToken($user, $keySuffix, $now + $i * 60 * 60);
-            if ($generatedToken === $token) {
+            $dataToVerify = $this->generatePasswordResetDataToHash($user, $keySuffix, $now + $i * 60 * 60);
+            if ($this->verifyHash($dataToVerify, $token) === true) {
                 return true;
             }
         }
 
         // fails if token is invalid, expired, password already changed, other user information has changed, ...
         return false;
+    }
+
+    /**
+     * Generate data which can be used to create the password reset token with a hashing function.
+     *
+     * @param array $user The user information.
+     * @param string $keySuffix The suffix used in generating a token.
+     * @param int $expiryTimestamp The expiration timestamp.
+     * @return string The generated string with the given data.
+     */
+    public function generatePasswordResetDataToHash($user, $keySuffix, $expiryTimestamp)
+    {
+        $expiry = date('YmdH', $expiryTimestamp);
+        $strToHash = $this->generateStringToHash(
+            $expiry . $user['login'] . $user['email'] . $user['ts_password_modified'] . $keySuffix,
+            $user['password']
+        );
+        return $strToHash;
     }
 
     /**
@@ -281,11 +299,9 @@ class PasswordResetter
             $expiryTimestamp = $this->getDefaultExpiryTime();
         }
 
-        $expiry = date('YmdH', $expiryTimestamp);
-        $token = $this->generateSecureHash(
-            $expiry . $user['login'] . $user['email'] . $user['ts_password_modified'] . $keySuffix,
-            $user['password']
-        );
+        $dataToHash = $this->generatePasswordResetDataToHash($user, $keySuffix, $expiryTimestamp);
+        $token = $this->hashData($dataToHash);
+
         return $token;
     }
 
@@ -296,7 +312,7 @@ class PasswordResetter
     }
 
     /**
-     * Generates a hash using a hash "identifier" and some data to hash. The hash identifier is
+     * Generates a secure string to be hashed with a hash "identifier" and some data to hash. The hash identifier is
      * a string that differentiates the hash in some way.
      *
      * We can't get the identifier back from a hash but we can tell if a hash is the hash for
@@ -307,9 +323,9 @@ class PasswordResetter
      *                               for example, be user information or can contain an expiration date,
      *                               or whatever.
      * @param string $data Any data that needs to be hashed securely, ie, a password.
-     * @return string The hash string.
+     * @return string The genarated string to be used with a hashing function.
      */
-    protected function generateSecureHash($hashIdentifier, $data)
+    protected function generateStringToHash($hashIdentifier, $data)
     {
         // mitigate rainbow table attack
         $halfDataLen = strlen($data) / 2;
@@ -320,7 +336,7 @@ class PasswordResetter
                       . substr($data, $halfDataLen)
                       ;
 
-        return $this->hashData($stringToHash);
+        return $stringToHash;
     }
 
     /**
@@ -347,6 +363,20 @@ class PasswordResetter
     protected function hashData($data)
     {
         return $this->passwordHelper->hash($data);
+    }
+
+    /**
+     * Verifies a string against the provided hash.
+     *
+     * Derived classes can override this to provide a different verification.
+     *
+     * @param string $data The data to verify.
+     * @param string $hash The hash to be verified against.
+     * @return boolean
+     */
+    protected function verifyHash($data,$hash)
+    {
+        return $this->passwordHelper->verify($data, $hash);
     }
 
     /**
